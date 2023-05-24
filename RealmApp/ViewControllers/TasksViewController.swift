@@ -72,7 +72,11 @@ final class TasksViewController: UITableViewController {
             isDone(true)
         }
         
-        let doneAction = UIContextualAction(style: .normal, title: "Done") { [unowned self] _, _, isDone in
+        let doneAction = UIContextualAction(
+            style: .normal,
+            title: indexPath.section == 0 ? "Done" : "Undone"
+        )
+        { [unowned self] _, _, isDone in
             doneTask(at: indexPath)
             tableView.reloadRows(at: [indexPath], with: .automatic)
             isDone(true)
@@ -131,13 +135,19 @@ final class TasksViewController: UITableViewController {
         tableView.deleteRows(at: [indexPath], with: .automatic)
     }
     
-
+    //MARK: - Save
+    private func save(task: String, withNote note: String) {
+        storageManager.save(task, withNote: note, to: taskList) { task in
+            let rowIndex = IndexPath(row: currentTasks.index(of: task) ?? 0, section: 0)
+            tableView.insertRows(at: [rowIndex], with: .automatic)
+        }
+    }
     @objc private func addButtonPressed() {
         showAlert()
     }
 }
-
-
+    
+//MARK: -  Alert
 extension TasksViewController {
     private func showAlert(with task: Task? = nil, completion: (() -> Void)? = nil) {
         let alertBuilder = AlertControllerBuilder(
@@ -163,11 +173,5 @@ extension TasksViewController {
         let alertController = alertBuilder.build()
         present(alertController, animated: true)
     }
-    
-    private func save(task: String, withNote note: String) {
-        storageManager.save(task, withNote: note, to: taskList) { task in
-            let rowIndex = IndexPath(row: currentTasks.index(of: task) ?? 0, section: 0)
-            tableView.insertRows(at: [rowIndex], with: .automatic)
-        }
-    }
 }
+
