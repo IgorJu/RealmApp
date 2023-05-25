@@ -78,7 +78,6 @@ final class TasksViewController: UITableViewController {
         )
         { [unowned self] _, _, isDone in
             doneTask(at: indexPath)
-            tableView.reloadRows(at: [indexPath], with: .automatic)
             isDone(true)
         }
         editAction.backgroundColor = UIColor.orange
@@ -93,12 +92,10 @@ final class TasksViewController: UITableViewController {
         if indexPath.section == 0 {
             let task = currentTasks[indexPath.row]
             storageManager.doneTask(task)
-        } else if indexPath.section == 1 {
+        } else {
             let task = completedTasks[indexPath.row]
             storageManager.doneTask(task)
         }
-        
-        tableView.beginUpdates()
         tableView.moveRow(
             at: indexPath,
             to: IndexPath(
@@ -106,7 +103,6 @@ final class TasksViewController: UITableViewController {
                 section: indexPath.section == 0 ? 1 : 0
             )
         )
-        tableView.endUpdates()
     }
     
     //MARK: - Edit
@@ -128,7 +124,7 @@ final class TasksViewController: UITableViewController {
         if indexPath.section == 0 {
             let task = currentTasks[indexPath.row]
             storageManager.deleteTask(task)
-        } else if indexPath.section == 1 {
+        } else {
             let task = completedTasks[indexPath.row]
             storageManager.deleteTask(task)
         }

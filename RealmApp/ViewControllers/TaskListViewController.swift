@@ -12,7 +12,6 @@ import RealmSwift
 final class TaskListViewController: UITableViewController {
 
     private var taskLists: Results<TaskList>!
-    private var notFilteredTaskList: Results<TaskList>!
     private let storageManager = StorageManager.shared
     private let dataManager = DataManager.shared
     
@@ -47,8 +46,10 @@ final class TaskListViewController: UITableViewController {
         let taskList = taskLists[indexPath.row]
         content.text = taskList.title
         
+        
         let notCompletedList = taskList.tasks.filter("isComplete = false")
-        if notCompletedList.count == 0 {
+        let completedList = taskList.tasks.filter("isComplete = true")
+        if notCompletedList.count == 0 && completedList.count > 0 {
             content.secondaryText = "✔️"
         } else {
             content.secondaryText = notCompletedList.count.formatted()
@@ -96,10 +97,9 @@ final class TaskListViewController: UITableViewController {
 
     @IBAction func sortingList(_ sender: UISegmentedControl) {
         if sender.selectedSegmentIndex == 1 {
-            notFilteredTaskList = taskLists
             taskLists = taskLists.sorted(byKeyPath: "title")
         } else {
-            taskLists = notFilteredTaskList
+            taskLists = storageManager.realm.objects(TaskList.self)
         }
         tableView.reloadData()
     }
