@@ -63,12 +63,19 @@ final class TasksViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         
+        let task = indexPath.section == 0
+            ? currentTasks[indexPath.row]
+            : completedTasks[indexPath.row]
+        
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [unowned self] _, _, _ in
-            deleteTask(at: indexPath)
+            storageManager.deleteTask(task)
+            tableView.deleteRows(at: [indexPath], with: .automatic)
         }
         
         let editAction = UIContextualAction(style: .normal, title: "Edit") { [unowned self] _, _, isDone in
-            editTask(at: indexPath)
+            showAlert(with: task) {
+                tableView.reloadRows(at: [indexPath], with: .automatic)
+            }
             isDone(true)
         }
         
@@ -76,59 +83,25 @@ final class TasksViewController: UITableViewController {
             style: .normal,
             title: indexPath.section == 0 ? "Done" : "Undone"
         )
-        { [unowned self] _, _, isDone in
-            doneTask(at: indexPath)
+        { [weak self] _, _, isDone in
+            self?.storageManager.doneTask(task)
+            let currentTaskIndex = IndexPath(
+                row: self?.currentTasks.index(of: task) ?? 0,
+                section: 0
+            )
+            let completedTaskIndex = IndexPath(
+                row: self?.completedTasks.index(of: task) ?? 0,
+                section: 1
+            )
+            
+            let destinationIndex = indexPath.section == 0 ? completedTaskIndex : currentTaskIndex
+            tableView.moveRow(at: indexPath, to: destinationIndex)
             isDone(true)
         }
         editAction.backgroundColor = UIColor.orange
         doneAction.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
         
         return UISwipeActionsConfiguration(actions: [doneAction, editAction, deleteAction])
-    }
-    
-    //MARK: - Private Methods
-    //MARK: - Done
-    private func doneTask(at indexPath: IndexPath) {
-        if indexPath.section == 0 {
-            let task = currentTasks[indexPath.row]
-            storageManager.doneTask(task)
-        } else {
-            let task = completedTasks[indexPath.row]
-            storageManager.doneTask(task)
-        }
-        tableView.moveRow(
-            at: indexPath,
-            to: IndexPath(
-                row: 0,
-                section: indexPath.section == 0 ? 1 : 0
-            )
-        )
-    }
-    
-    //MARK: - Edit
-    private func editTask(at indexPath: IndexPath) {
-        if indexPath.section == 0 {
-            let task = currentTasks[indexPath.row]
-            showAlert(with: task) { [weak self] in
-                self?.tableView.reloadRows(at: [indexPath], with: .automatic)
-            }
-        } else {
-            let task = completedTasks[indexPath.row]
-            showAlert(with: task) { [weak self] in
-                self?.tableView.reloadRows(at: [indexPath], with: .automatic)
-            }
-        }
-    }
-    //MARK: - Delete
-    private func deleteTask(at indexPath: IndexPath) {
-        if indexPath.section == 0 {
-            let task = currentTasks[indexPath.row]
-            storageManager.deleteTask(task)
-        } else {
-            let task = completedTasks[indexPath.row]
-            storageManager.deleteTask(task)
-        }
-        tableView.deleteRows(at: [indexPath], with: .automatic)
     }
     
     //MARK: - Save
